@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Curtain Calculator UI</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 2em;
+      }
+      label {
+        display: block;
+        margin-top: 1em;
+      }
+      select,
+      input {
+        margin-top: 0.5em;
+      }
+      button {
+        margin-top: 1.5em;
+        padding: 0.5em 1em;
+      }
+      .result {
+        margin-top: 2em;
+        padding: 1em;
+        border: 1px solid #ccc;
+        background: #f9f9f9;
+      }
+      .error {
+        color: red;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Curtain Calculator</h1>
+    <form id="curtainForm">
+      <label>
+        Width (mm):
+        <input type="number" id="width" required min="1" />
+      </label>
+      <label>
+        Drop (mm):
+        <input type="number" id="drop" required min="1" />
+      </label>
+      <label>
+        Curtain Type:
+        <select id="curtainType" required>
+          <option value="">-- Select --</option>
+          <option value="sheer_on_strack">Sheer on S Track</option>
+          <option value="sheer_on_strack_long_drop">
+            Sheer on S Track (Drop > 3m)
+          </option>
+          <option value="drape_on_strack">Drape on S Track</option>
+          <option value="drape_on_silon_track">Drape on Silon Track</option>
+          <option value="sheer_on_silon_track_or_rod">
+            Sheer on Silon Track or Rod
+          </option>
+        </select>
+      </label>
+      <button type="submit">Calculate</button>
+    </form>
+    <div class="result" id="result"></div>
+    <script>
+      // Calculation functions (same as your script)
+      function calcSheerOnSTrack(width, drop) {
+        const making = (width * 2.2) / 1000;
+        const fabric = making;
+        return {
+          making,
+          fabric,
+          track: width / 1000,
+          installation: width / 1000,
+        };
+      }
+      function calcSheerOnSTrackDropLong(width, drop) {
+        const widthCm = width / 10;
+        const dropMm = drop;
+        const making = Math.ceil(((widthCm + 44) * 2) / 300);
+        const fabric = Math.ceil(((dropMm + 300) * 2) / 1000);
+        return {
+          making,
+          fabric: fabric * making,
+          track: width / 1000,
+          installation: width / 1000,
+        };
+      }
+      function calcDrapeOnSTrack(width, drop) {
+        const widthCm = width / 10;
+        const dropMm = drop;
+        const making = Math.ceil(((widthCm + 44) * 2) / 140);
+        const fabric = Math.ceil(((dropMm + 300) * making) / 1000);
+        const lining = fabric;
+        return {
+          making,
+          fabric,
+          lining,
+          track: width / 1000,
+          installation: width / 1000,
+        };
+      }
+      function calcDrapeOnSilonTrack(width, drop) {
+        const widths = Math.ceil(((width + 450) * 2) / 700);
+        const fabric = Math.ceil(((drop + 300) * widths) / 1000);
+        const lining = fabric;
+        return {
+          making: widths,
+          fabric,
+          lining,
+          track: width / 1000,
+          installation: width / 1000,
+        };
+      }
+      function calcSheerOnSilonTrackOrRod(width, drop) {
+        const making = (width * 2.5) / 1000;
+        const fabric = making;
+        return {
+          making,
+          fabric,
+          track: width / 1000,
+          installation: width / 1000,
+        };
+      }
+      document
+        .getElementById("curtainForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+          const width = Number(document.getElementById("width").value);
+          const drop = Number(document.getElementById("drop").value);
+          const curtainType = document.getElementById("curtainType").value;
+          const resultDiv = document.getElementById("result");
+          resultDiv.innerHTML = "";
+          try {
+            if (!width || !drop || !curtainType)
+              throw new Error("Please fill in all fields.");
+            let result;
+            switch (curtainType) {
+              case "sheer_on_strack":
+                result = calcSheerOnSTrack(width, drop);
+                break;
+              case "sheer_on_strack_long_drop":
+                result = calcSheerOnSTrackDropLong(width, drop);
+                break;
+              case "drape_on_strack":
+                result = calcDrapeOnSTrack(width, drop);
+                break;
+              case "drape_on_silon_track":
+                result = calcDrapeOnSilonTrack(width, drop);
+                break;
+              case "sheer_on_silon_track_or_rod":
+                result = calcSheerOnSilonTrackOrRod(width, drop);
+                break;
+              default:
+                throw new Error("Unknown curtain type.");
+            }
+            let html = "<h3>Results</h3><ul>";
+            for (const [key, val] of Object.entries(result)) {
+              html += `<li><b>${key}:</b> ${val}</li>`;
+            }
+            html += "</ul>";
+            resultDiv.innerHTML = html;
+          } catch (err) {
+            resultDiv.innerHTML =
+              '<span class="error">' + err.message + "</span>";
+          }
+        });
+    </script>
+  </body>
+</html>

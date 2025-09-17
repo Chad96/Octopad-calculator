@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Curtain & Track Price Calculator</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 2em;
+      }
+      label {
+        display: block;
+        margin-top: 1em;
+      }
+      select,
+      input {
+        margin-top: 0.5em;
+      }
+      button {
+        margin-top: 1.5em;
+        padding: 0.5em 1em;
+      }
+      .result {
+        margin-top: 2em;
+        padding: 1em;
+        border: 1px solid #ccc;
+        background: #f9f9f9;
+      }
+      .section {
+        margin-bottom: 2em;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Curtain & Track Price Calculator</h1>
+    <form id="curtainForm">
+      <div class="section">
+        <h2>Curtain Details</h2>
+        <label>
+          Width (mm):
+          <input type="number" id="width" required min="1" />
+        </label>
+        <label>
+          Drop (mm):
+          <input type="number" id="drop" required min="1" />
+        </label>
+        <label>
+          Curtain Type:
+          <select id="curtainType" required>
+            <option value="">-- Select --</option>
+            <option value="sheer_on_strack">Sheer on S Track</option>
+            <option value="sheer_on_strack_long_drop">
+              Sheer on S Track (Drop > 3m)
+            </option>
+            <option value="drape_on_strack">Drape on S Track</option>
+            <option value="drape_on_silon_track">Drape on Silon Track</option>
+            <option value="sheer_on_silon_track_or_rod">
+              Sheer on Silon Track or Rod
+            </option>
+          </select>
+        </label>
+      </div>
+
+      <div class="section">
+        <h2>Curtain Pricing (per meter or width)</h2>
+        <label
+          >Making Price per unit:
+          <input type="number" id="makingPrice" min="0" step="0.01" value="0" />
+        </label>
+        <label
+          >Fabric Price per meter:
+          <input type="number" id="fabricPrice" min="0" step="0.01" value="0" />
+        </label>
+        <label
+          >Lining Price per meter:
+          <input type="number" id="liningPrice" min="0" step="0.01" value="0" />
+        </label>
+      </div>
+
+      <div class="section">
+        <h2>Track Details</h2>
+        <label>
+          Track System:
+          <select id="trackSystem" onchange="toggleTrackInputs()">
+            <option value="standard">Standard</option>
+            <option value="motorized">Motorized</option>
+            <option value="sfold">S-Fold Standard</option>
+          </select>
+        </label>
+
+        <!-- Standard Track -->
+        <div id="standardTrackFields">
+          <label>
+            Track Type:
+            <select id="trackTypeName">
+              <option value="Single Cord Draw">Single Cord Draw</option>
+              <option value="Single Hand Traverse">Single Hand Traverse</option>
+              <option value="2HT">2HT</option>
+              <option value="1HT">1HT</option>
+              <option value="1CD">1CD</option>
+              <option value="2CD">2CD</option>
+            </select>
+          </label>
+          <label>
+            Track CSV Headers (comma separated):
+            <input
+              type="text"
+              id="csvHeaders"
+              value="Track Width,Brackets,Single Cord Draw,Single Hand Traverse,2HT,1HT,1CD,2CD"
+            />
+          </label>
+          <label>
+            Track CSV Data Rows (one row per line):
+            <textarea id="csvDataRows" rows="14" style="width: 100%">
+900,3,56,32,62,73,89
+1200,3,58,36,67,82,97,107
+1500,4,67,40,74,91,107,117
+1800,4,71,43,74,104,125,144
+2100,5,80,57,95,122,144,167
+2400,5,84,57,95,124,144,167
+3000,6,101,69,120,146,184,205
+3600,6,106,69,120,146,184,205
+4200,7,120,85,144,180,202,232
+4800,8,132,100,154,202,261,261
+5400,9,143,108,165,217,283,283
+5700,9,150,108,165,217,288,288
+6000,9,153,119,181,235,311,311</textarea
+            >
+          </label>
+        </div>
+
+        <!-- Motorized Track -->
+        <div id="motorizedTrackFields" style="display: none">
+          <label>
+            Motorized Track Type:
+            <select id="motorizedType">
+              <option value="Track, Motor and Remote">
+                Track, Motor and Remote
+              </option>
+              <option value="Track, Motor for Smart Home">
+                Track, Motor for Smart Home
+              </option>
+            </select>
+          </label>
+          <label>
+            Motorized CSV Headers (comma separated):
+            <input
+              type="text"
+              id="motorizedHeaders"
+              value="Width,Track, Motor and Remote,Track, Motor for Smart Home"
+            />
+          </label>
+          <label>
+            Motorized CSV Data Rows (one row per line):
+            <textarea id="motorizedRows" rows="6" style="width: 100%">
+2000,443,503
+3000,520,580
+4000,542,602
+5000,564,624
+6000,587,647</textarea
+            >
+          </label>
+        </div>
+
+        <!-- S-Fold Track -->
+        <div id="sfoldTrackFields" style="display: none">
+          <label>
+            S-Fold Track Type:
+            <select id="sfoldType">
+              <option value="Top Fix">Top Fix (Type 1)</option>
+              <option value="Single Face Fix">Single Face Fix (Type 2)</option>
+              <option value="Single Track Double Bracket">
+                Single Track Double Bracket (Type 3)
+              </option>
+              <option value="Single Track Triple Bracket">
+                Single Track Triple Bracket (Type 4)
+              </option>
+            </select>
+          </label>
+          <label>
+            S-Fold CSV Headers (comma separated):
+            <input
+              type="text"
+              id="sfoldHeaders"
+              value="Length,Brackets,Top Fix,Single Face Fix,Single Track Double Bracket,Single Track Triple Bracket"
+            />
+          </label>
+          <label>
+            S-Fold CSV Data Rows (one row per line):
+            <textarea id="sfoldRows" rows="14" style="width: 100%">
+1.00,2,44,47,48,53
+1.25,2,53,57,59,63
+1.50,3,63,67,69,74
+1.75,3,74,79,81,86
+2.00,4,84,89,92,97
+2.25,4,90,96,99,105
+2.50,4,101,107,110,116
+2.75,5,112,119,122,129
+3.00,5,123,130,133,141
+3.25,6,132,140,143,151
+3.50,6,143,151,154,163
+3.75,7,153,162,165,175
+4.00,7,164,173,177,187
+4.25,8,174,184,188,199
+4.50,8,185,195,199,210
+4.75,9,195,206,210,222
+5.00,9,206,216,221,233
+5.25,9,216,226,231,244</textarea
+            >
+          </label>
+        </div>
+      </div>
+
+      <button type="submit">Calculate Total</button>
+    </form>
+
+    <div class="result" id="result"></div>
+
+    <script>
+      // --- Curtain calculation functions ---
+      function calcSheerOnSTrack(width, drop) {
+        const making = (width * 2.2) / 1000;
+        const fabric = making;
+        return {
+          making,
+          fabric,
+          track: width / 1000,
+          installation: width / 1000,
+        };
+      }
+      function calcSheerOnSTrackDropLong(width, drop) {
+        const widthCm = width / 10;
+        const dropMm = drop;
+        const making = Math.ceil(((widthCm + 44) * 2) / 300);
+        const fabric = Math.ceil(((dropMm + 300) * 2) / 1000);
+        return {
+          making,
+          fabric: fabric * making,
+          track: width / 1000,
+          installation: width / 1000,
+        };
+      }
+      function calcDrapeOnSTrack(width, drop) {
+        const widthCm = width / 10;
+        const dropMm = drop;
+        const making = Math.ceil(((widthCm + 44) * 2) / 140);
+        const fabric = Math.ceil(((dropMm + 300) * making) / 1000);
+        const lining = fabric;
+        return {
+          making,
+          fabric,
+          lining,
+          track: width / 1000,
+          installation: width / 1000,
+        };
+      }
+      function calcDrapeOnSilonTrack(width, drop) {
+        const widths = Math.ceil(((width + 450) * 2) / 700);
+        const fabric = Math.ceil(((drop + 300) * widths) / 1000);
+        const lining = fabric;
+        return {
+          making: widths,
+          fabric,
+          lining,
+          track: width / 1000,
+          installation: width / 1000,
+        };
+      }
+      function calcSheerOnSilonTrackOrRod(width, drop) {
+        const making = (width * 2.5) / 1000;
+        const fabric = making;
+        return {
+          making,
+          fabric,
+          track: width / 1000,
+          installation: width / 1000,
+        };
+      }
+
+      // Toggle track fields
+      function toggleTrackInputs() {
+        const system = document.getElementById("trackSystem").value;
+        document.getElementById("standardTrackFields").style.display =
+          system === "standard" ? "block" : "none";
+        document.getElementById("motorizedTrackFields").style.display =
+          system === "motorized" ? "block" : "none";
+        document.getElementById("sfoldTrackFields").style.display =
+          system === "sfold" ? "block" : "none";
+      }
+      window.onload = function () {
+        toggleTrackInputs();
+      };
+
+      // --- Track calculation functions ---
+      function calculateTrackPrice(
+        trackWidth,
+        csvHeaders,
+        csvDataRows,
+        trackTypeName
+      ) {
+        let headers = csvHeaders.split(",").map((s) => s.trim());
+        let dataRows = csvDataRows
+          .split("\n")
+          .map((line) => line.split(",").map((s) => s.trim()));
+        const widthIndex = 0;
+        const desiredPriceIndex = headers.indexOf(trackTypeName);
+        const options = [];
+        dataRows.forEach((row) => {
+          const widthVal = parseFloat(row[widthIndex]);
+          const priceVal = parseFloat(row[desiredPriceIndex]);
+          if (!isNaN(widthVal) && !isNaN(priceVal))
+            options.push({ width: widthVal, price: priceVal });
+        });
+        options.sort((a, b) => a.width - b.width);
+        let selectedOption =
+          options.find((opt) => opt.width >= trackWidth) ||
+          options[options.length - 1];
+        return {
+          selectedTrackWidth: selectedOption.width,
+          trackPrice: selectedOption.price,
+        };
+      }
+
+      function calculateMotorizedTrackPrice(
+        trackWidth,
+        csvHeaders,
+        csvDataRows,
+        motorizedType
+      ) {
+        let headers = csvHeaders.split(",").map((s) => s.trim());
+        let dataRows = csvDataRows
+          .split("\n")
+          .map((line) => line.split(",").map((s) => s.trim()));
+        const widthIndex = 0;
+        const desiredPriceIndex = headers.indexOf(motorizedType);
+        const options = [];
+        dataRows.forEach((row) => {
+          const widthVal = parseFloat(row[widthIndex]);
+          const priceVal = parseFloat(row[desiredPriceIndex]);
+          if (!isNaN(widthVal) && !isNaN(priceVal))
+            options.push({ width: widthVal, price: priceVal });
+        });
+        options.sort((a, b) => a.width - b.width);
+        let selectedOption =
+          options.find((opt) => opt.width >= trackWidth) ||
+          options[options.length - 1];
+        return {
+          selectedTrackWidth: selectedOption.width,
+          trackPrice: selectedOption.price,
+        };
+      }
+
+      function calculateSfoldTrackPrice(
+        trackWidth,
+        csvHeaders,
+        csvDataRows,
+        sfoldType
+      ) {
+        let headers = csvHeaders.split(",").map((s) => s.trim());
+        let dataRows = csvDataRows
+          .split("\n")
+          .map((line) => line.split(",").map((s) => s.trim()));
+        const widthIndex = 0;
+        const desiredPriceIndex = headers.indexOf(sfoldType);
+        const options = [];
+        dataRows.forEach((row) => {
+          const widthVal = parseFloat(row[widthIndex]);
+          const priceVal = parseFloat(row[desiredPriceIndex]);
+          if (!isNaN(widthVal) && !isNaN(priceVal))
+            options.push({ width: widthVal, price: priceVal });
+        });
+        options.sort((a, b) => a.width - b.width);
+        let selectedOption =
+          options.find((opt) => opt.width >= trackWidth) ||
+          options[options.length - 1];
+        return {
+          selectedTrackWidth: selectedOption.width,
+          trackPrice: selectedOption.price,
+        };
+      }
+
+      // --- Form submit ---
+      document
+        .getElementById("curtainForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          // Inputs
+          const width = Number(document.getElementById("width").value);
+          const drop = Number(document.getElementById("drop").value);
+          const curtainType = document.getElementById("curtainType").value;
+          const makingPrice = Number(
+            document.getElementById("makingPrice").value
+          );
+          const fabricPrice = Number(
+            document.getElementById("fabricPrice").value
+          );
+          const liningPrice = Number(
+            document.getElementById("liningPrice").value
+          );
+          const trackSystem = document.getElementById("trackSystem").value;
+
+          // Track
+          let trackPrice = 0;
+          let trackResult = null;
+          if (trackSystem === "standard") {
+            trackResult = calculateTrackPrice(
+              width,
+              document.getElementById("csvHeaders").value,
+              document.getElementById("csvDataRows").value,
+              document.getElementById("trackTypeName").value
+            );
+            trackPrice = trackResult.trackPrice;
+          } else if (trackSystem === "motorized") {
+            trackResult = calculateMotorizedTrackPrice(
+              width,
+              document.getElementById("motorizedHeaders").value,
+              document.getElementById("motorizedRows").value,
+              document.getElementById("motorizedType").value
+            );
+            trackPrice = trackResult.trackPrice;
+          } else if (trackSystem === "sfold") {
+            trackResult = calculateSfoldTrackPrice(
+              width,
+              document.getElementById("sfoldHeaders").value,
+              document.getElementById("sfoldRows").value,
+              document.getElementById("sfoldType").value
+            );
+            trackPrice = trackResult.trackPrice;
+          }
+
+          // Curtain
+          let curtainResult;
+          switch (curtainType) {
+            case "sheer_on_strack":
+              curtainResult = calcSheerOnSTrack(width, drop);
+              break;
+            case "sheer_on_strack_long_drop":
+              curtainResult = calcSheerOnSTrackDropLong(width, drop);
+              break;
+            case "drape_on_strack":
+              curtainResult = calcDrapeOnSTrack(width, drop);
+              break;
+            case "drape_on_silon_track":
+              curtainResult = calcDrapeOnSilonTrack(width, drop);
+              break;
+            case "sheer_on_silon_track_or_rod":
+              curtainResult = calcSheerOnSilonTrackOrRod(width, drop);
+              break;
+          }
+
+          // Curtain pricing
+          let curtainTotal = 0;
+          let curtainBreakdown = "";
+          if ("making" in curtainResult && makingPrice > 0) {
+            curtainTotal += curtainResult.making * makingPrice;
+            curtainBreakdown += `<li>Making: ${
+              curtainResult.making
+            } x $${makingPrice} = $${(
+              curtainResult.making * makingPrice
+            ).toFixed(2)}</li>`;
+          }
+          if ("fabric" in curtainResult && fabricPrice > 0) {
+            curtainTotal += curtainResult.fabric * fabricPrice;
+            curtainBreakdown += `<li>Fabric: ${
+              curtainResult.fabric
+            } x $${fabricPrice} = $${(
+              curtainResult.fabric * fabricPrice
+            ).toFixed(2)}</li>`;
+          }
+          if ("lining" in curtainResult && liningPrice > 0) {
+            curtainTotal += curtainResult.lining * liningPrice;
+            curtainBreakdown += `<li>Lining: ${
+              curtainResult.lining
+            } x $${liningPrice} = $${(
+              curtainResult.lining * liningPrice
+            ).toFixed(2)}</li>`;
+          }
+
+          let total = curtainTotal + trackPrice;
+
+          // Display
+          let html = "<h3>Results</h3><b>Curtain Calculation:</b><ul>";
+          for (const [key, val] of Object.entries(curtainResult)) {
+            html += `<li><b>${key}:</b> ${val}</li>`;
+          }
+          html += "</ul>";
+          html +=
+            "<b>Curtain Price Breakdown:</b><ul>" +
+            (curtainBreakdown || "<li>No price fields entered.</li>") +
+            "</ul>";
+          if (trackSystem === "standard") {
+            html += `<b>Track Price (${trackResult.selectedTrackWidth}mm, ${
+              document.getElementById("trackTypeName").value
+            }):</b> $${trackPrice.toFixed(2)}<br>`;
+          } else if (trackSystem === "motorized") {
+            html += `<b>Motorized Track Price (${
+              trackResult.selectedTrackWidth
+            }mm, ${
+              document.getElementById("motorizedType").value
+            }):</b> $${trackPrice.toFixed(2)}<br>`;
+          } else if (trackSystem === "sfold") {
+            html += `<b>S-Fold Track Price (${
+              trackResult.selectedTrackWidth
+            }m, ${
+              document.getElementById("sfoldType").value
+            }):</b> $${trackPrice.toFixed(2)}<br>`;
+          }
+          html += `<b>Total Price (Curtain + Track):</b> <span style="color:green;">$${total.toFixed(
+            2
+          )}</span>`;
+          document.getElementById("result").innerHTML = html;
+
+          // 🚀 Send to Make webhook (Create Record in Airtable)
+          const payload = {
+            "Width (mm)": width,
+            "Drop (mm)": drop,
+            "Curtain Type": curtainType,
+            "Making Price": makingPrice,
+            "Fabric Price": fabricPrice,
+            "Lining Price": liningPrice,
+            "Track System": trackSystem,
+            "Track Result": JSON.stringify(trackResult),
+            "Curtain Result": JSON.stringify(curtainResult),
+            "Curtain Total": curtainTotal,
+            "Track Price": trackPrice,
+            "Total Price": total,
+          };
+
+          // --- New dual-webhook logic ---
+          const payload1 = {
+            "Width (mm)": width,
+            "Drop (mm)": drop,
+            "Curtain Type": curtainType,
+            "Making Price": makingPrice,
+            "Fabric Price": fabricPrice,
+            "Lining Price": liningPrice,
+            "Track System": trackSystem,
+            "Track Result": JSON.stringify(trackResult),
+            "Curtain Result": JSON.stringify(curtainResult),
+            "Curtain Total": curtainTotal,
+            "Track Price": trackPrice,
+            "Total Price": total,
+          };
+
+          const payload2 = {
+            RecordID: null, // This would typically come from your Airtable record creation
+            GroupName: `Curtain_Calculation_${Date.now()}`,
+            Width: width,
+            Drop: drop,
+            CurtainType: curtainType,
+            TotalPrice: total,
+            CalculationDate: new Date().toISOString(),
+          };
+
+          const webhook1 = fetch(
+            "https://hook.eu2.make.com/wxl7i8cagvfix67eqk0khlysarrs8so5",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload1),
+            }
+          );
+
+          const webhook2 = fetch(
+            "https://hook.eu2.make.com/lnxqjjd8f2on61vvtvp92cu72f9jxm9f",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload2),
+            }
+          );
+
+          Promise.all([webhook1, webhook2])
+            .then((responses) =>
+              Promise.all(responses.map((res) => res.json().catch(() => ({}))))
+            )
+            .then((data) => {
+              console.log("Webhook 1 response:", data[0]);
+              console.log("Webhook 2 response:", data[1]);
+              if (data[1] && data[1].RecordID) {
+                console.log(
+                  "Blueprint triggered with RecordID:",
+                  data[1].RecordID
+                );
+              }
+            })
+            .catch((err) => console.error("Error posting to webhooks:", err));
+        });
+    </script>
+  </body>
+</html>
